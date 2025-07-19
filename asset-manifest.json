@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/orgchart-app/static/css/main.e6c13ad2.css",
+    "main.js": "/orgchart-app/static/js/main.953b356f.js",
+    "static/js/453.6456246b.chunk.js": "/orgchart-app/static/js/453.6456246b.chunk.js",
+    "index.html": "/orgchart-app/index.html",
+    "main.e6c13ad2.css.map": "/orgchart-app/static/css/main.e6c13ad2.css.map",
+    "main.953b356f.js.map": "/orgchart-app/static/js/main.953b356f.js.map",
+    "453.6456246b.chunk.js.map": "/orgchart-app/static/js/453.6456246b.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.953b356f.js"
+  ]
+}
