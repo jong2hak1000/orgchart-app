@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/orgchart-app/static/css/main.f855e6bc.css",
-    "main.js": "/orgchart-app/static/js/main.0cb2370b.js",
-    "static/js/488.f584a8fe.chunk.js": "/orgchart-app/static/js/488.f584a8fe.chunk.js",
+    "main.js": "/orgchart-app/static/js/main.f3f545b0.js",
+    "static/js/453.6456246b.chunk.js": "/orgchart-app/static/js/453.6456246b.chunk.js",
     "index.html": "/orgchart-app/index.html",
     "main.f855e6bc.css.map": "/orgchart-app/static/css/main.f855e6bc.css.map",
-    "main.0cb2370b.js.map": "/orgchart-app/static/js/main.0cb2370b.js.map",
-    "488.f584a8fe.chunk.js.map": "/orgchart-app/static/js/488.f584a8fe.chunk.js.map"
+    "main.f3f545b0.js.map": "/orgchart-app/static/js/main.f3f545b0.js.map",
+    "453.6456246b.chunk.js.map": "/orgchart-app/static/js/453.6456246b.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.f855e6bc.css",
-    "static/js/main.0cb2370b.js"
+    "static/js/main.f3f545b0.js"
   ]
 }
