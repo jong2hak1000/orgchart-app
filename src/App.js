@@ -320,6 +320,7 @@ const App = () => {
     );
   };
 
+  // 특정 노드 자신을 포함하여 모든 하위 노드의 총 개수를 세는 함수
   const countAllDescendants = (userCode, allUsers) => {
       let count = 1; // 자기 자신 포함
 
@@ -332,25 +333,48 @@ const App = () => {
       return count;
   };
 
-  const getLeftRightDescendantCounts = (userCode, allUsers) => {
+  // 전체 회원 목록 테이블에서 '좌측 인원'과 '우측 인원'을 계산하는 함수
+  // 첫 번째 직계 자식의 전체 계보를 '좌측'으로, 나머지 직계 자식들의 전체 계보를 '우측'으로 간주
+  const getOverallLeftRightCounts = (userCode, allUsers) => {
       const directChildren = allUsers.filter(u => u.refCode === userCode);
 
       if (directChildren.length === 0) {
           return { left: 0, right: 0 };
       }
 
-      const leftChild = directChildren[0];
-      // 좌측 첫 번째 자식 노드를 포함한 모든 하위 노드 수에서 자신(왼쪽 자식)을 뺀다.
-      const leftCount = countAllDescendants(leftChild.myCode, allUsers) - 1; 
+      let leftOverallCount = 0;
+      let rightOverallCount = 0;
 
-      let rightCount = 0;
-      for (let i = 1; i < directChildren.length; i++) {
-          // 우측의 다른 자식 노드들을 포함한 모든 하위 노드 수에서 자신(각 우측 자식)을 뺀다.
-          rightCount += countAllDescendants(directChildren[i].myCode, allUsers) - 1; 
+      // 첫 번째 직계 자식 (좌측 계보의 메인)
+      if (directChildren.length > 0) {
+          const firstChild = directChildren[0];
+          // 첫 번째 자식 노드 자신과 그 아래 모든 하위 노드를 포함하여 계산
+          leftOverallCount = countAllDescendants(firstChild.myCode, allUsers); 
       }
 
-      return { left: leftCount, right: rightCount };
+      // 두 번째 이후의 직계 자식들 (우측 계보의 합산)
+      for (let i = 1; i < directChildren.length; i++) {
+          const otherChild = directChildren[i];
+          // 각 우측 자식 노드 자신과 그 아래 모든 하위 노드를 포함하여 합산
+          rightOverallCount += countAllDescendants(otherChild.myCode, allUsers);
+      }
+
+      return { left: leftOverallCount, right: rightOverallCount };
   };
+
+  // 이전에 사용되던 getLeftRightDescendantCounts 함수 (현재 테이블에서는 사용되지 않음)
+  // const getLeftRightDescendantCounts = (userCode, allUsers) => {
+  //     const directChildren = allUsers.filter(u => u.refCode === userCode);
+  //     if (directChildren.length === 0) { return { left: 0, right: 0 }; }
+  //     const leftChild = directChildren[0];
+  //     const leftCount = countAllDescendants(leftChild.myCode, allUsers) - 1;
+  //     let rightCount = 0;
+  //     for (let i = 1; i < directChildren.length; i++) {
+  //         rightCount += countAllDescendants(directChildren[i].myCode, allUsers) - 1;
+  //     }
+  //     return { left: leftCount, right: rightCount };
+  // };
+
 
   const usersToDisplayInChart = filteredUsers.length > 0 ? filteredUsers : users;
   
@@ -624,7 +648,8 @@ const App = () => {
               </thead>
               <tbody>
                 {users.map((u) => {
-                  const { left, right } = getLeftRightDescendantCounts(u.myCode, users);
+                  // getOverallLeftRightCounts 함수를 사용하여 좌측/우측 인원 계산
+                  const { left, right } = getOverallLeftRightCounts(u.myCode, users);
                   return (
                     <tr key={u.myCode} style={{ borderBottom: '1px solid #eee' }}>
                       <td style={{ padding: '8px' }}>{u.name}</td>
