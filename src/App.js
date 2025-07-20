@@ -321,7 +321,7 @@ const App = () => {
   };
 
   const countAllDescendants = (userCode, allUsers) => {
-      let count = 1;
+      let count = 1; // 자기 자신 포함
 
       const directChildren = allUsers.filter(u => u.refCode === userCode);
       
@@ -340,11 +340,13 @@ const App = () => {
       }
 
       const leftChild = directChildren[0];
-      const leftCount = countAllDescendants(leftChild.myCode, allUsers) -1;
+      // 좌측 첫 번째 자식 노드를 포함한 모든 하위 노드 수에서 자신(왼쪽 자식)을 뺀다.
+      const leftCount = countAllDescendants(leftChild.myCode, allUsers) - 1; 
 
       let rightCount = 0;
       for (let i = 1; i < directChildren.length; i++) {
-          rightCount += countAllDescendants(directChildren[i].myCode, allUsers) -1;
+          // 우측의 다른 자식 노드들을 포함한 모든 하위 노드 수에서 자신(각 우측 자식)을 뺀다.
+          rightCount += countAllDescendants(directChildren[i].myCode, allUsers) - 1; 
       }
 
       return { left: leftCount, right: rightCount };
@@ -514,7 +516,7 @@ const App = () => {
         />
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
           <button
-            onClick={searchUsers} // 이 부분의 주석을 제거했습니다.
+            onClick={searchUsers}
             style={{
               padding: "10px 15px",
               backgroundColor: '#28a745',
