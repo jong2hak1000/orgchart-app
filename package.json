@@ -2,12 +2,7 @@
   "name": "orgchart-app",
   "version": "0.1.0",
   "private": true,
-  // === 여기부터 추가 또는 수정 ===
- "homepage": "https://jong2hak1000.github.io/orgchart-app",
-  // 예시: "homepage": "http://myusername.github.io/my-react-app",
-  // 또는 만약 조직 계정이라면: "http://myorganization.github.io/my-react-app",
-  // 또는 Custom Domain을 사용하는 경우: "http://www.yourcustomdomain.com",
-  // === 여기까지 추가 또는 수정 ===
+  "homepage": "https://jong2hak1000.github.io/orgchart-app",
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -15,21 +10,19 @@
     "react-organizational-chart": "^2.2.0",
     "web-vitals": "^2.1.4"
   },
-  "devDependencies": { // gh-pages는 여기에 추가됩니다.
+  "devDependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "gh-pages": "^6.1.1" // 이 부분이 설치되어 있는지 확인
+    "gh-pages": "^6.1.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    // === 여기부터 추가 ===
-    "predeploy": "npm run build", // 배포 전에 build 스크립트 실행
-    "deploy": "gh-pages -d build" // build 폴더의 내용을 gh-pages 브랜치에 배포
-    // === 여기까지 추가 ===
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [

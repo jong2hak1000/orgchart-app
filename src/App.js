@@ -187,9 +187,9 @@ const App = () => {
 
     const lowerCaseQuery = searchQuery.toLowerCase();
     const foundUsers = users.filter(user => 
-      user.userId.toLowerCase().includes(lowerCaseQuery) || // 아이디 검색
-      user.name.toLowerCase().includes(lowerCaseQuery) ||   // 이름 검색
-      user.myCode.toLowerCase().includes(lowerCaseQuery)    // 코드 검색
+      user.userId.toLowerCase().includes(lowerCaseQuery) ||
+      user.name.toLowerCase().includes(lowerCaseQuery) ||
+      user.myCode.toLowerCase().includes(lowerCaseQuery)
     );
 
     if (foundUsers.length === 0) {
@@ -198,7 +198,6 @@ const App = () => {
       return;
     }
 
-    // 검색된 사용자 중 최상위 노드를 찾아 조직도 루트로 설정
     let rootUserForSearch = null;
     if (foundUsers.length > 0) {
         rootUserForSearch = foundUsers.find(u => u.myCode === searchQuery);
@@ -381,8 +380,8 @@ const App = () => {
           value={form.userId}
           onChange={handleFormChange}
           disabled={!!editingUserCode}
-          autoCorrect="off" // 자동 교정 비활성화
-          spellCheck="false" // 맞춤법 검사 비활성화
+          autoCorrect="off"
+          spellCheck="false"
           style={{
             width: "calc(100% - 16px)",
             marginBottom: 10,
@@ -390,7 +389,7 @@ const App = () => {
             border: '1px solid #ccc',
             borderRadius: '4px',
             backgroundColor: editingUserCode ? '#f0f0f0' : 'white',
-            textTransform: 'none' // 텍스트 변환 방지
+            textTransform: 'none'
           }}
         />
         {/* 이름 입력 필드 */}
@@ -426,8 +425,8 @@ const App = () => {
           value={form.myCode}
           onChange={handleFormChange}
           disabled={!!editingUserCode}
-          autoCorrect="off" // 자동 교정 비활성화
-          spellCheck="false" // 맞춤법 검사 비활성화
+          autoCorrect="off"
+          spellCheck="false"
           style={{
             width: "calc(100% - 16px)",
             marginBottom: 10,
@@ -435,7 +434,7 @@ const App = () => {
             border: '1px solid #ccc',
             borderRadius: '4px',
             backgroundColor: editingUserCode ? '#f0f0f0' : 'white',
-            textTransform: 'none' // 텍스트 변환 방지
+            textTransform: 'none'
           }}
         />
         {/* 추천인 코드 입력 필드: 자동 교정/맞춤법 검사 비활성화 및 텍스트 변환 방지 */}
@@ -444,15 +443,15 @@ const App = () => {
           name="refCode"
           value={form.refCode}
           onChange={handleFormChange}
-          autoCorrect="off" // 자동 교정 비활성화
-          spellCheck="false" // 맞춤법 검사 비활성화
+          autoCorrect="off"
+          spellCheck="false"
           style={{
             width: "calc(100% - 16px)",
             marginBottom: 10,
             padding: 8,
             border: '1px solid #ccc',
             borderRadius: '4px',
-            textTransform: 'none' // 텍스트 변환 방지
+            textTransform: 'none'
           }}
         />
         <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em', color: '#555' }}>등록일:</label>
@@ -515,7 +514,7 @@ const App = () => {
         />
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
           <button
-            onClick={searchUsers}
+            onClick={searchUsers} // 이 부분의 주석을 제거했습니다.
             style={{
               padding: "10px 15px",
               backgroundColor: '#28a745',
