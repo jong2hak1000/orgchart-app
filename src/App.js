@@ -23,12 +23,12 @@ const OrgChartNode = ({ name, myCode }) => (
 
 const App = () => {
   const [users, setUsers] = useState([]);
-  const [form, setForm] = useState({ name: "", phone: "", depositAmount: "", myCode: "", refCode: "", remarks: "", regDate: "" });
-  const [searchCode, setSearchCode] = useState("");
+  const [form, setForm] = useState({ userId: "", name: "", phone: "", depositAmount: "", myCode: "", refCode: "", remarks: "", regDate: "" });
+  const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [showAllUsers, setShowAllUsers] = useState(false);
   const [editingUserCode, setEditingUserCode] = useState(null);
-  const [zoomLevel, setZoomLevel] = useState(1); 
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // 날짜를 YYYY-MM-DD 형식으로 포맷하는 헬퍼 함수
   const getFormattedDate = (date) => {
@@ -57,14 +57,16 @@ const App = () => {
   }, [editingUserCode]);
 
 
+  // 코드 및 아이디 유효성 검사 함수 (영어 대소문자, 숫자 허용)
   const isValidCode = (code) => {
-    return /^[a-z0-9]*$/.test(code);
+    return /^[a-zA-Z0-9]*$/.test(code);
   };
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    if ((name === "myCode" || name === "refCode") && value !== "" && !isValidCode(value)) {
-      alert("코드에는 소문자와 숫자만 입력할 수 있습니다.");
+    // myCode, refCode, userId에 대한 유효성 검사 추가
+    if ((name === "myCode" || name === "refCode" || name === "userId") && value !== "" && !isValidCode(value)) {
+      alert("아이디, 내 코드, 추천인 코드에는 영어 대소문자와 숫자만 입력할 수 있습니다.");
       return;
     }
     if (name === "depositAmount") {
@@ -79,8 +81,9 @@ const App = () => {
   };
 
   const handleSubmit = () => {
-    if (!form.name || !form.myCode || !form.refCode) {
-      alert("이름, 내 코드, 추천인 코드는 필수 입력 항목입니다.");
+    // userId 필수 입력 검사 추가
+    if (!form.name || !form.myCode || !form.refCode || !form.userId) {
+      alert("이름, 내 코드, 추천인 코드, 아이디는 필수 입력 항목입니다.");
       return;
     }
 
@@ -89,6 +92,12 @@ const App = () => {
     if (editingUserCode) {
       if (form.myCode !== editingUserCode) {
         alert("수정 모드에서는 '내 코드'를 변경할 수 없습니다.");
+        return;
+      }
+      // 수정 시 userId 중복 검사 (본인 제외)
+      const isDuplicateUserId = users.some(u => u.userId === form.userId && u.myCode !== editingUserCode);
+      if (isDuplicateUserId) {
+        alert("입력한 아이디는 이미 사용 중입니다. 다른 아이디를 입력해 주세요.");
         return;
       }
 
@@ -106,6 +115,12 @@ const App = () => {
       const isDuplicateCode = users.some((u) => u.myCode === form.myCode);
       if (isDuplicateCode) {
         alert("'내 코드'는 중복될 수 없습니다. 다른 코드를 입력해 주세요.");
+        return;
+      }
+      // 신규 등록 시 userId 중복 검사
+      const isDuplicateUserId = users.some(u => u.userId === form.userId);
+      if (isDuplicateUserId) {
+        alert("입력한 아이디는 이미 사용 중입니다. 다른 아이디를 입력해 주세요.");
         return;
       }
 
@@ -130,9 +145,9 @@ const App = () => {
       alert("새 사용자가 등록되었습니다.");
     }
     
-    setForm({ name: "", phone: "", depositAmount: "", myCode: "", refCode: "", remarks: "", regDate: "" });
+    setForm({ userId: "", name: "", phone: "", depositAmount: "", myCode: "", refCode: "", remarks: "", regDate: "" });
     setFilteredUsers([]);
-    setSearchCode("");
+    setSearchQuery("");
   };
 
   const deleteUser = (codeToDelete) => {
@@ -151,7 +166,7 @@ const App = () => {
     const usersToRemove = [codeToDelete, ...collectDescendants(codeToDelete)];
     setUsers(users.filter((u) => !usersToRemove.includes(u.myCode)));
     setFilteredUsers([]);
-    setSearchCode("");
+    setSearchQuery("");
   };
 
   const startEdit = (code) => {
@@ -163,33 +178,55 @@ const App = () => {
     }
   };
 
-  const searchByCode = () => {
-    if (!searchCode) {
+  // 검색 함수 변경: 아이디, 이름, 코드로 검색 가능
+  const searchUsers = () => {
+    if (!searchQuery) {
       setFilteredUsers([]);
       return;
     }
 
-    const rootUserForSearch = users.find(u => u.myCode === searchCode);
-    if (!rootUserForSearch) {
-      alert("해당 코드를 가진 사용자가 없습니다.");
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    const foundUsers = users.filter(user => 
+      user.userId.toLowerCase().includes(lowerCaseQuery) || // 아이디 검색
+      user.name.toLowerCase().includes(lowerCaseQuery) ||   // 이름 검색
+      user.myCode.toLowerCase().includes(lowerCaseQuery)    // 코드 검색
+    );
+
+    if (foundUsers.length === 0) {
+      alert("해당 검색어와 일치하는 사용자가 없습니다.");
       setFilteredUsers([]);
       return;
     }
 
-    const collectSubtree = (code, allUsers) => {
-        let subtree = [];
-        const user = allUsers.find(u => u.myCode === code);
-        if (user) {
-            subtree.push(user);
-            const children = allUsers.filter(u => u.refCode === code);
-            for (const child of children) {
-                subtree = subtree.concat(collectSubtree(child.myCode, allUsers));
-            }
+    // 검색된 사용자 중 최상위 노드를 찾아 조직도 루트로 설정
+    let rootUserForSearch = null;
+    if (foundUsers.length > 0) {
+        rootUserForSearch = foundUsers.find(u => u.myCode === searchQuery);
+        if (!rootUserForSearch) {
+            rootUserForSearch = foundUsers.find(u => 
+                u.refCode === "0000" || 
+                !filteredUsers.some(other => other.myCode === u.refCode)
+            );
         }
-        return subtree;
-    };
-    
-    setFilteredUsers(collectSubtree(searchCode, users));
+    }
+
+    if (rootUserForSearch) {
+        const collectSubtree = (code, allUsers) => {
+            let subtree = [];
+            const user = allUsers.find(u => u.myCode === code);
+            if (user) {
+                subtree.push(user);
+                const children = allUsers.filter(u => u.refCode === code);
+                for (const child of children) {
+                    subtree = subtree.concat(collectSubtree(child.myCode, allUsers));
+                }
+            }
+            return subtree;
+        };
+        setFilteredUsers(collectSubtree(rootUserForSearch.myCode, users));
+    } else {
+        setFilteredUsers(foundUsers);
+    }
   };
 
 
@@ -210,10 +247,11 @@ const App = () => {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        if (Array.isArray(data) && data.every(item => item.name && item.phone && item.myCode)) {
+        if (Array.isArray(data) && data.every(item => item.name && item.myCode)) {
           const updatedData = data.map(user => ({
               ...user,
-              regDate: user.regDate || '날짜 없음' 
+              userId: user.userId || "",
+              regDate: user.regDate || '날짜 없음'
           }));
           setUsers(updatedData);
           setFilteredUsers([]);
@@ -240,6 +278,7 @@ const App = () => {
       refCode: node.refCode,
       remarks: node.remarks,
       regDate: node.regDate,
+      userId: node.userId,
       children: buildVisualTree(data, node.myCode)
     }));
   };
@@ -301,12 +340,12 @@ const App = () => {
           return { left: 0, right: 0 };
       }
 
-      const leftChild = directChildren[0]; 
-      const leftCount = countAllDescendants(leftChild.myCode, allUsers);
+      const leftChild = directChildren[0];
+      const leftCount = countAllDescendants(leftChild.myCode, allUsers) -1;
 
       let rightCount = 0;
       for (let i = 1; i < directChildren.length; i++) {
-          rightCount += countAllDescendants(directChildren[i].myCode, allUsers);
+          rightCount += countAllDescendants(directChildren[i].myCode, allUsers) -1;
       }
 
       return { left: leftCount, right: rightCount };
@@ -316,9 +355,12 @@ const App = () => {
   
   let chartRootNodes = [];
   if (filteredUsers.length > 0) {
-      const searchedUser = usersToDisplayInChart.find(u => u.myCode === searchCode);
-      if (searchedUser) {
-          chartRootNodes = [buildVisualTree(usersToDisplayInChart, searchedUser.refCode).find(n => n.myCode === searchedUser.myCode)];
+      const potentialRoot = filteredUsers.find(u =>
+          u.refCode === "0000" ||
+          !filteredUsers.some(other => other.myCode === u.refCode)
+      );
+      if (potentialRoot) {
+          chartRootNodes = [buildVisualTree(filteredUsers, potentialRoot.refCode).find(n => n.myCode === potentialRoot.myCode)];
       }
   } else {
       chartRootNodes = buildVisualTree(usersToDisplayInChart, "0000");
@@ -331,17 +373,35 @@ const App = () => {
 
       <div style={{ marginBottom: 30, padding: 20, border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#fdfdfd' }}>
         <h3 style={{ marginTop: 0, color: '#333' }}>{editingUserCode ? "사용자 정보 수정" : "새 사용자 등록"}</h3>
+        
+        {/* 아이디 입력 필드: 자동 교정/맞춤법 검사 비활성화 및 텍스트 변환 방지 */}
+        <input
+          placeholder="아이디 (필수, 고유, 영어 대소문자/숫자만)"
+          name="userId"
+          value={form.userId}
+          onChange={handleFormChange}
+          disabled={!!editingUserCode}
+          autoCorrect="off" // 자동 교정 비활성화
+          spellCheck="false" // 맞춤법 검사 비활성화
+          style={{
+            width: "calc(100% - 16px)",
+            marginBottom: 10,
+            padding: 8,
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            backgroundColor: editingUserCode ? '#f0f0f0' : 'white',
+            textTransform: 'none' // 텍스트 변환 방지
+          }}
+        />
+        {/* 이름 입력 필드 */}
         <input
           placeholder="이름 (필수)"
           name="name"
           value={form.name}
           onChange={handleFormChange}
-          lang="en"
-          inputMode="latin"
-          autoCorrect="off"
-          spellCheck="false"
           style={{ width: "calc(100% - 16px)", marginBottom: 10, padding: 8, border: '1px solid #ccc', borderRadius: '4px' }}
         />
+        
         <input
           placeholder="전화번호"
           name="phone"
@@ -359,20 +419,41 @@ const App = () => {
           pattern="[0-9]*"
           style={{ width: "calc(100% - 16px)", marginBottom: 10, padding: 8, border: '1px solid #ccc', borderRadius: '4px' }}
         />
+        {/* 내 코드 입력 필드: 자동 교정/맞춤법 검사 비활성화 및 텍스트 변환 방지 */}
         <input
-          placeholder="내 코드 (필수, 고유, 소문자/숫자만)"
+          placeholder="내 코드 (필수, 고유, 영어 대소문자/숫자만)"
           name="myCode"
           value={form.myCode}
           onChange={handleFormChange}
           disabled={!!editingUserCode}
-          style={{ width: "calc(100% - 16px)", marginBottom: 10, padding: 8, border: '1px solid #ccc', borderRadius: '4px', backgroundColor: editingUserCode ? '#f0f0f0' : 'white' }}
+          autoCorrect="off" // 자동 교정 비활성화
+          spellCheck="false" // 맞춤법 검사 비활성화
+          style={{
+            width: "calc(100% - 16px)",
+            marginBottom: 10,
+            padding: 8,
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            backgroundColor: editingUserCode ? '#f0f0f0' : 'white',
+            textTransform: 'none' // 텍스트 변환 방지
+          }}
         />
+        {/* 추천인 코드 입력 필드: 자동 교정/맞춤법 검사 비활성화 및 텍스트 변환 방지 */}
         <input
-          placeholder="추천인 코드 (필수, 소문자/숫자만, 최상위는 '0000')"
+          placeholder="추천인 코드 (필수, 영어 대소문자/숫자만, 최상위는 '0000')"
           name="refCode"
           value={form.refCode}
           onChange={handleFormChange}
-          style={{ width: "calc(100% - 16px)", marginBottom: 10, padding: 8, border: '1px solid #ccc', borderRadius: '4px' }}
+          autoCorrect="off" // 자동 교정 비활성화
+          spellCheck="false" // 맞춤법 검사 비활성화
+          style={{
+            width: "calc(100% - 16px)",
+            marginBottom: 10,
+            padding: 8,
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            textTransform: 'none' // 텍스트 변환 방지
+          }}
         />
         <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em', color: '#555' }}>등록일:</label>
         <input
@@ -408,7 +489,7 @@ const App = () => {
         </button>
         {editingUserCode && (
           <button
-            onClick={() => { setEditingUserCode(null); setForm({ name: "", phone: "", depositAmount: "", myCode: "", refCode: "", remarks: "", regDate: "" }); }}
+            onClick={() => { setEditingUserCode(null); setForm({ userId: "", name: "", phone: "", depositAmount: "", myCode: "", refCode: "", remarks: "", regDate: "" }); }}
             style={{
               padding: "10px 20px",
               backgroundColor: '#6c757d',
@@ -427,14 +508,14 @@ const App = () => {
       <div style={{ marginBottom: 30, padding: 20, border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#fdfdfd' }}>
         <h3 style={{ marginTop: 0, color: '#333' }}>조직 관리</h3>
         <input
-          placeholder="코드로 검색 (비워두면 전체 표시)"
-          value={searchCode}
-          onChange={(e) => setSearchCode(e.target.value)}
+          placeholder="아이디, 이름, 코드로 검색"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           style={{ width: "calc(100% - 16px)", padding: 8, marginBottom: 10, border: '1px solid #ccc', borderRadius: '4px' }}
         />
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
           <button
-            onClick={searchByCode}
+            onClick={searchUsers}
             style={{
               padding: "10px 15px",
               backgroundColor: '#28a745',
@@ -448,7 +529,7 @@ const App = () => {
             검색
           </button>
           <button
-            onClick={() => { setSearchCode(""); setFilteredUsers([]); }}
+            onClick={() => { setSearchQuery(""); setFilteredUsers([]); }}
             style={{
               padding: "10px 15px",
               backgroundColor: '#6c757d',
@@ -491,13 +572,13 @@ const App = () => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px' }}>
             <span>조직도 크기:</span>
-            <button 
-                onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))} 
+            <button
+                onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))}
                 style={{ padding: '5px 10px', background: '#e9ecef', border: '1px solid #ced4da', borderRadius: '4px', cursor: 'pointer' }}
             >-</button>
             <span>{(zoomLevel * 100).toFixed(0)}%</span>
-            <button 
-                onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))} 
+            <button
+                onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
                 style={{ padding: '5px 10px', background: '#e9ecef', border: '1px solid #ced4da', borderRadius: '4px', cursor: 'pointer' }}
             >+</button>
         </div>
@@ -528,6 +609,7 @@ const App = () => {
               <thead>
                 <tr style={{ borderBottom: '2px solid #ddd', backgroundColor: '#f2f2f2' }}>
                   <th style={{ padding: '8px', textAlign: 'left' }}>이름</th>
+                  <th style={{ padding: '8px', textAlign: 'left' }}>아이디</th>
                   <th style={{ padding: '8px', textAlign: 'left' }}>전화번호</th>
                   <th style={{ padding: '8px', textAlign: 'left' }}>입금액</th>
                   <th style={{ padding: '8px', textAlign: 'left' }}>내 코드</th>
@@ -545,6 +627,7 @@ const App = () => {
                   return (
                     <tr key={u.myCode} style={{ borderBottom: '1px solid #eee' }}>
                       <td style={{ padding: '8px' }}>{u.name}</td>
+                      <td style={{ padding: '8px' }}>{u.userId}</td>
                       <td style={{ padding: '8px' }}>{u.phone}</td>
                       <td style={{ padding: '8px' }}>{u.depositAmount || "없음"}</td>
                       <td style={{ padding: '8px' }}>{u.myCode}</td>
@@ -569,14 +652,14 @@ const App = () => {
       )}
 
       <h3 style={{ textAlign: 'center', color: '#0056b3', marginTop: '30px' }}>조직도</h3>
-      <div style={{ 
-          overflow: 'auto', 
-          padding: '20px', 
-          border: '1px solid #eee', 
-          borderRadius: '8px', 
-          minHeight: '200px', 
-          display: 'flex', 
-          justifyContent: 'center', 
+      <div style={{
+          overflow: 'auto',
+          padding: '20px',
+          border: '1px solid #eee',
+          borderRadius: '8px',
+          minHeight: '200px',
+          display: 'flex',
+          justifyContent: 'center',
           alignItems: 'flex-start',
           transform: `scale(${zoomLevel})`,
           transformOrigin: 'top center'
@@ -588,7 +671,7 @@ const App = () => {
                 <p style={{ textAlign: 'center', color: '#777' }}>등록된 사용자가 없습니다. 새로운 사용자를 등록하여 조직도를 만드세요.</p>
             ) : (
                 <p style={{ textAlign: 'center', color: '#777' }}>
-                    {filteredUsers.length > 0 && !users.find(u => u.myCode === searchCode) ?
+                    {filteredUsers.length > 0 && !users.find(u => u.myCode === searchQuery) ?
                         "해당 검색 코드를 가진 사용자가 조직도에 존재하지 않습니다." :
                         "조직도의 최상위 사용자(추천인 코드가 '0000'인 사용자)가 없습니다."
                     }
